@@ -1,18 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using SimpD.Enums;
 
-namespace SimpD.Entity;
+namespace SimpD.Dto;
 
-public class Port
+public class PortDto
 {
+    [Required]
     public Guid Id { get; set; }
-    
-    public Container Owner { get; set; }
-    
     [Required]
     public ushort Host { get; set; }
     [Required]
     public ushort Container { get; set; }
     [Required]
-    public PortType Type { get; set; }
+    public string Type { get; set; }
 }

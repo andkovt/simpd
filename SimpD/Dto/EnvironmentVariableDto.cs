@@ -1,16 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SimpD.Entity;
+namespace SimpD.Dto;
 
-public class EnvironmentVariable
+public class EnvironmentVariableDto
 {
+    [Required]
     public Guid Id { get; set; }
-    
-    public Container Owner { get; set; }
-    
     [Required]
     public string Name { get; set; } = "Unknown";
-    
     [Required]
     public string Value { get; set; } = "Unknown";
 }

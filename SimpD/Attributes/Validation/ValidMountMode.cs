@@ -4,7 +4,7 @@ namespace SimpD.Attributes.Validation;
 
 public class ValidMountMode : ValidationAttribute
 {
-    private static readonly string[] ValidModes = new[] {"rw", "r"};
+    private static readonly string[] ValidModes = new[] {"ReadWrite", "ReadOnly"};
     
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {

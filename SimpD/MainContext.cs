@@ -12,6 +12,7 @@ public class MainContext : DbContext
     public DbSet<Mount> Mounts { get; set; }
     public DbSet<Port> Ports { get; set; }
     public DbSet<EnvironmentVariable> EnvironmentVariables { get; set; }
+    public DbSet<Status> Statuses { get; set; }
 
     public MainContext()
     {
@@ -24,5 +25,19 @@ public class MainContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Container>().HasIndex(c => c.Name).IsUnique();
+        
+        modelBuilder.Entity<Container>().HasMany(c => c.Mounts)
+            .WithOne(m => m.Owner).OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<Container>().HasMany(c => c.EnvironmentVariables)
+            .WithOne(e => e.Owner).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Container>().HasMany(c => c.Ports)
+            .WithOne(p => p.Owner).OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Container>()
+            .HasOne(c => c.Status)
+            .WithOne(s => s.Container)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasForeignKey<Status>();
     }
 }

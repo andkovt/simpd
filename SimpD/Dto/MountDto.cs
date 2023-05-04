@@ -12,5 +12,5 @@ public class MountDto
     [Required]
     public string Destination { get; set; } = "";
 
-    [Required] [ValidMountMode] public string Mode { get; set; } = "rw";
+    [Required] [ValidMountMode] public string Mode { get; set; } = "ReadWrite";
 }

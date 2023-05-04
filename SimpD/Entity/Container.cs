@@ -11,6 +11,8 @@ public class Container
     
     [Required]
     public string Image { get; set; } = "Unknown";
+    
+    public Status? Status { get; set; }
 
     public IList<EnvironmentVariable> EnvironmentVariables { get; set; } = new List<EnvironmentVariable>();
     public IList<Mount> Mounts { get; set; } = new List<Mount>();

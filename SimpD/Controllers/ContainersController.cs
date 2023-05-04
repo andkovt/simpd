@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SimpD.Dto;
 using SimpD.Entity;
 using SimpD.Manager;
@@ -10,19 +11,16 @@ namespace SimpD.Controllers;
 [Route("[controller]")]
 public class ContainersController : ControllerBase
 {
-    private readonly DockerConnector dockerConnector;
     private readonly IMapper mapper;
     private readonly ContainerManager containerManager;
     private readonly MainContext context;
 
     public ContainersController(
-        DockerConnector dockerConnector,
         IMapper mapper,
         ContainerManager containerManager,
         MainContext context
     )
     {
-        this.dockerConnector = dockerConnector;
         this.mapper = mapper;
         this.containerManager = containerManager;
         this.context = context;
@@ -40,7 +38,12 @@ public class ContainersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult> ViewAsync(Guid id)
     {
-        var entity = await context.Containers.FindAsync(id);
+        var entity = context.Containers
+            .Include(c => c.Mounts)
+            .Include(c => c.Ports)
+            .Include(c => c.EnvironmentVariables)
+            .FirstOrDefault(c => c.Id == id);
+        
         if (entity == null) {
             return NotFound();
         }
@@ -57,9 +60,12 @@ public class ContainersController : ControllerBase
         return CreatedAtAction("View", new {id = createdEntity.Id}, mapper.Map<ContainerDto>(createdEntity));
     }
 
-    [HttpPut]
-    public async Task<IActionResult> EditAsync([FromBody] ContainerDto containerDto)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> EditAsync(Guid id, [FromBody] ContainerDto containerDto)
     {
+        var updatedEntity = mapper.Map<Container>(containerDto);
+        await containerManager.UpdateContainerAsync(updatedEntity);
+        
         return Ok();
     }
 
@@ -71,8 +77,7 @@ public class ContainersController : ControllerBase
             return NotFound();
         }
 
-        context.Containers.Remove(entity);
-        await context.SaveChangesAsync();
+        await containerManager.RemoveContainerAsync(id);
         
         return Ok(mapper.Map<ContainerViewDto>(entity));
     }

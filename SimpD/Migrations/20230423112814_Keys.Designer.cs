@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SimpD;
 
@@ -10,9 +11,11 @@ using SimpD;
 namespace SimpD.Migrations
 {
     [DbContext(typeof(MainContext))]
-    partial class MainContextModelSnapshot : ModelSnapshot
+    [Migration("20230423112814_Keys")]
+    partial class Keys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
@@ -115,22 +118,6 @@ namespace SimpD.Migrations
                     b.ToTable("Ports");
                 });
 
-            modelBuilder.Entity("SimpD.Entity.Status", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ContainerStatus")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Statuses");
-                });
-
             modelBuilder.Entity("SimpD.Entity.EnvironmentVariable", b =>
                 {
                     b.HasOne("SimpD.Entity.Container", "Owner")
@@ -164,17 +151,6 @@ namespace SimpD.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("SimpD.Entity.Status", b =>
-                {
-                    b.HasOne("SimpD.Entity.Container", "Container")
-                        .WithOne("Status")
-                        .HasForeignKey("SimpD.Entity.Status", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Container");
-                });
-
             modelBuilder.Entity("SimpD.Entity.Container", b =>
                 {
                     b.Navigation("EnvironmentVariables");
@@ -182,8 +158,6 @@ namespace SimpD.Migrations
                     b.Navigation("Mounts");
 
                     b.Navigation("Ports");
-
-                    b.Navigation("Status");
                 });
 #pragma warning restore 612, 618
         }

@@ -14,4 +14,6 @@ public class ContainerDto
     public string Image { get; set; } = "";
 
     public IList<MountDto> Mounts { get; set; } = new List<MountDto>();
+    public IList<EnvironmentVariableDto> EnvironmentVariables { get; set; } = new List<EnvironmentVariableDto>();
+    public IList<PortDto> Ports { get; set; } = new List<PortDto>();
 }

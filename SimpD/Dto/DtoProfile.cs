@@ -13,20 +13,13 @@ public class DtoProfile : Profile
         
         CreateMap<MountDto, Mount>();
         CreateMap<Mount, MountDto>();
+
+        CreateMap<Port, PortDto>();
+        CreateMap<PortDto, Port>();
+
+        CreateMap<EnvironmentVariable, EnvironmentVariableDto>();
+        CreateMap<EnvironmentVariableDto, EnvironmentVariable>();
         
         CreateMap<Container, ContainerViewDto>();
-
-        CreateMap<string, MountMode>().ConvertUsing(
-            (s, mode) =>
-            {
-                switch (s) {
-                    case "r":
-                        return MountMode.ReadOnly;
-                    case "rw":
-                        return MountMode.ReadWrite;
-                    default:
-                        throw new Exception($"Unknown mount mode {s}");
-                }
-            });
     }
 }

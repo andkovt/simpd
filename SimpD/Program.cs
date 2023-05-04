@@ -1,8 +1,21 @@
+using Hangfire;
+using Hangfire.MemoryStorage;
+using Serilog;
+using Serilog.Events;
 using SimpD;
+using SimpD.Docker;
 using SimpD.Dto;
 using SimpD.Manager;
 
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .MinimumLevel.Verbose()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .CreateLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 
@@ -10,9 +23,21 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddHangfire(
+    c =>
+        c.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseMemoryStorage()
+);
+
+builder.Services.AddHangfireServer();
+
 builder.Services.AddAutoMapper(typeof(DtoProfile));
 builder.Services.AddScoped<DockerConnector>();
 builder.Services.AddScoped<ContainerManager>();
+builder.Services.AddScoped<DockerAdapter>();
 builder.Services.AddDbContext<MainContext>();
 
 builder.Services.AddCors(
@@ -39,7 +64,8 @@ if (app.Environment.IsDevelopment()) {
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.UseSerilogRequestLogging();
+app.UseHangfireDashboard();
 app.MapControllers();
 app.UseCors();
 

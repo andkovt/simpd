@@ -7,6 +7,8 @@ public class Mount
 {
     public Guid Id { get; set; }
     
+    public Container Owner { get; set; }
+    
     [Required]
     public string Source { get; set; } = "Unknown";
     
