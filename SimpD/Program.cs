@@ -5,7 +5,7 @@ using Serilog.Events;
 using SimpD;
 using SimpD.Docker;
 using SimpD.Dto;
-using SimpD.Manager;
+using SimpD.Service;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -35,9 +35,9 @@ builder.Services.AddHangfire(
 builder.Services.AddHangfireServer();
 
 builder.Services.AddAutoMapper(typeof(DtoProfile));
-builder.Services.AddScoped<DockerConnector>();
 builder.Services.AddScoped<ContainerManager>();
 builder.Services.AddScoped<DockerAdapter>();
+builder.Services.AddScoped<DockerStatusProvider>();
 builder.Services.AddDbContext<MainContext>();
 
 builder.Services.AddCors(

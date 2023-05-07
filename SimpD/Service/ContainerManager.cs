@@ -1,10 +1,11 @@
 using Hangfire;
+using Microsoft.EntityFrameworkCore;
 using SimpD.Background;
 using SimpD.Docker;
 using SimpD.Entity;
 using SimpD.Enums;
 
-namespace SimpD.Manager;
+namespace SimpD.Service;
 
 public class ContainerManager
 {
@@ -21,13 +22,19 @@ public class ContainerManager
 
     public async Task<Container?> GetAsync(Guid id)
     {
-        return await context.Containers.FindAsync(id);
+        return await context.Containers
+            .Include(c => c.Mounts)
+            .Include(c => c.Ports)
+            .Include(c => c.EnvironmentVariables)
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
     
     public async Task<Container> CreateContainerAsync(Container container)
     {
-        logger.LogInformation("Attempting to create a new container with id '{Id}' and name '{Name}'", container.Id, container.Name);
-        logger.LogDebug("Container name: '{Name}', Image: '{Image}'", container.Name, container.Image);
+        logger.LogInformation(
+            "Attempting to create a new container with id '{ContainerId}' and name '{Name}'",
+            container.Id,
+            container.Name);
 
         if (!container.Image.Contains(":")) {
             container.Image += ":latest";
@@ -35,14 +42,30 @@ public class ContainerManager
         
         await context.Containers.AddAsync(container);
         await context.SaveChangesAsync();
-
+        
+        logger.LogInformation("Container '{ContainerId}' saved. Queuing create docker job.", container.Id);
         BackgroundJob.Enqueue<CreateDockerContainerJob>(j => j.RunAsync(container.Id));
         
         return container;
     }
 
+    public async Task StartContainerAsync(Container container)
+    {
+        logger.LogInformation("Starting container {ContainerName}", container.Name);
+        await dockerAdapter.StartContainerAsync(container.Name);
+        logger.LogInformation("Container {ContainerName} started", container.Name);
+    }
+
+    public async Task StopContainerAsync(Container container)
+    {
+        logger.LogInformation("Stopping container {ContainerName}", container.Name);
+        await dockerAdapter.StopContainerAsync(container.Name);
+        logger.LogInformation("Container {ContainerName} stopped", container.Name);
+    }
+
     public async Task<Container> RemoveContainerAsync(Guid containerId)
     {
+        
         var entity = await context.Containers.FindAsync(containerId);
         await dockerAdapter.RemoveContainerAsync(entity);
 
@@ -55,6 +78,13 @@ public class ContainerManager
     public async Task<Container> UpdateContainerAsync(Container container)
     {
         var existingEntity = await context.Containers.FindAsync(container.Id);
+        if (existingEntity == null) {
+            logger.LogError("Attempting to remove non existing container {ContainerName}", container.Name);
+            return container;
+        }
+
+        await RemoveContainerAsync(existingEntity.Id);
+        await CreateContainerAsync(container);
 
         return container;
     }

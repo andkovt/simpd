@@ -1,7 +1,7 @@
 using SimpD.Docker;
 using SimpD.Enums;
 using SimpD.Exceptions;
-using SimpD.Manager;
+using SimpD.Service;
 
 namespace SimpD.Background;
 
@@ -47,7 +47,8 @@ public class CreateDockerContainerJob
         logger.LogInformation("Creating docker container {ContainerId}", containerId);
         await dockerAdapter.CreateContainerFromEntityAsync(container);
         await containerManager.UpdateStatusAsync(container, ContainerStatus.Created);
-        
         logger.LogInformation("Created docker container {ContainerId}", containerId);
+
+        await containerManager.StartContainerAsync(container);
     }
 }

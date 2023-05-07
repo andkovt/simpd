@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpD.Dto;
 using SimpD.Entity;
-using SimpD.Manager;
+using SimpD.Enums;
+using SimpD.Service;
 
 namespace SimpD.Controllers;
 
@@ -14,23 +15,30 @@ public class ContainersController : ControllerBase
     private readonly IMapper mapper;
     private readonly ContainerManager containerManager;
     private readonly MainContext context;
+    private readonly DockerStatusProvider dockerStatusProvider;
 
     public ContainersController(
         IMapper mapper,
         ContainerManager containerManager,
-        MainContext context
+        MainContext context,
+        DockerStatusProvider dockerStatusProvider
     )
     {
         this.mapper = mapper;
         this.containerManager = containerManager;
         this.context = context;
+        this.dockerStatusProvider = dockerStatusProvider;
     }
     
     [HttpGet]
     public async Task<ActionResult> ListAsync()
     {
-        var entities = context.Containers;
-        var containers = mapper.ProjectTo<ContainerViewDto>(entities);
+        var containers = context.Containers
+            .Include(c => c.Mounts)
+            .Include(c => c.EnvironmentVariables)
+            .Include(c => c.Ports)
+            .Select(e => mapper.Map<ContainerViewDto>(e)).ToList();
+        await dockerStatusProvider.ProvideAsync(containers);
         
         return Ok(containers);
     }
@@ -47,8 +55,11 @@ public class ContainersController : ControllerBase
         if (entity == null) {
             return NotFound();
         }
+
+        var dto = mapper.Map<ContainerViewDto>(entity);
+        await dockerStatusProvider.ProvideAsync(new List<ContainerViewDto>() {dto});
         
-        return Ok(mapper.Map<ContainerViewDto>(entity));
+        return Ok(dto);
     }
 
     [HttpPost]
@@ -80,5 +91,25 @@ public class ContainersController : ControllerBase
         await containerManager.RemoveContainerAsync(id);
         
         return Ok(mapper.Map<ContainerViewDto>(entity));
+    }
+
+    [HttpPut("{id:guid}/state")]
+    public async Task<IActionResult> UpdateStateAsync(Guid id, [FromBody] StateUpdateDto state)
+    {
+        var entity = await containerManager.GetAsync(id);
+        if (entity == null) {
+            return NotFound();
+        }
+        
+        switch (state.State) {
+            case PreferredState.Started:
+                await containerManager.StartContainerAsync(entity);
+                break;
+            case PreferredState.Stopped:
+                await containerManager.StopContainerAsync(entity);
+                break;
+        }
+        
+        return Ok();
     }
 }
