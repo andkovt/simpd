@@ -6,6 +6,7 @@ using SimpD;
 using SimpD.Docker;
 using SimpD.Dto;
 using SimpD.Service;
+using SimpD.Startup;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -17,10 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog();
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -38,7 +36,10 @@ builder.Services.AddAutoMapper(typeof(DtoProfile));
 builder.Services.AddScoped<ContainerManager>();
 builder.Services.AddScoped<DockerAdapter>();
 builder.Services.AddScoped<DockerStatusProvider>();
+builder.Services.AddScoped<GuiProvisioner>();
 builder.Services.AddDbContext<MainContext>();
+builder.Services.AddTransient<IStartupFilter, RunMigrations>();
+builder.Services.AddTransient<IStartupFilter, ProvisionGui>();
 
 builder.Services.AddCors(
     options =>

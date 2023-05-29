@@ -65,7 +65,6 @@ public class ContainerManager
 
     public async Task<Container> RemoveContainerAsync(Guid containerId)
     {
-        
         var entity = await context.Containers.FindAsync(containerId);
         await dockerAdapter.RemoveContainerAsync(entity);
 
