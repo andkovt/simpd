@@ -25,7 +25,7 @@ jobs:
         run: |
           cd SimpD
           dotnet build --configuration Release --no-restore
-          dotnet publish -C Release -o ../release/linux-x64 --self-contained true
+          dotnet publish -c Release -o ../release/linux-x64 --self-contained true
           
       - uses: actions/upload-artifact@v3
         with:
