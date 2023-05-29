@@ -5,13 +5,21 @@ namespace SimpD.Service;
 
 public class GuiProvisioner
 {
-    private const string GuiContainerImage = "andkovt/simpd-web:latest";
-    private readonly Guid guiContainerId = new Guid("123fa583-0d4f-4dd7-a6e2-8e6c5fcf0d54");
+    private const string ContainerName = "simpd-web";
+    private readonly Guid guiContainerId = new ("123fa583-0d4f-4dd7-a6e2-8e6c5fcf0d54");
     private readonly ContainerManager containerManager;
+    private readonly IConfiguration configuration;
 
-    public GuiProvisioner(ContainerManager containerManager)
+    private readonly string image;
+    private readonly ushort port;
+
+    public GuiProvisioner(ContainerManager containerManager, IConfiguration configuration)
     {
         this.containerManager = containerManager;
+        this.configuration = configuration;
+
+        image = this.configuration["Gui:Image"] ?? "";
+        port = ushort.Parse(this.configuration["Gui:port"] ?? "0");
     }
     
     public async Task ProvisionAsync()
@@ -21,7 +29,7 @@ public class GuiProvisioner
             await containerManager.RemoveContainerAsync(container.Id);
         }
         
-        container = await CreateGuiContainerAsync();
+        await CreateGuiContainerAsync();
     }
 
     private async Task<Container> CreateGuiContainerAsync()
@@ -29,9 +37,10 @@ public class GuiProvisioner
         var container = new Container()
         {
             Id = guiContainerId,
-            Image = GuiContainerImage,
-            Name = "simpd-web",
-            Ports = new List<Port> {new Port(){Container = 3000, Host = 3000, Id = new Guid(), Type = PortType.Tcp}}
+            Image = image,
+            Name = ContainerName,
+            
+            Ports = new List<Port> {new (){Container = 3000, Host = port, Id = new Guid(), Type = PortType.Tcp}}
         };
 
         return await containerManager.CreateContainerAsync(container);

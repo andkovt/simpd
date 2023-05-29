@@ -1,0 +1,33 @@
+name: Build
+on: 
+  push:
+    branches:
+      - main
+  pull_request: ~
+
+env:
+  DOTNET_VERSION: '6.0.401'
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Install dependencies
+        run: dotnet restore
+        
+      - name: Build
+        run: |
+          cd Simpd
+          dotnet build --configuration Release --no-restore
+          dotnet publish -C Release -o ../release/linux-x64 --self-contained true
+          
+      - uses: actions/upload-artifact@v3
+        with:
+          name: release
+          path: ./release
