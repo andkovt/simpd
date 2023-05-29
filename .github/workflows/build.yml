@@ -23,7 +23,7 @@ jobs:
         
       - name: Build
         run: |
-          cd Simpd
+          cd SimpD
           dotnet build --configuration Release --no-restore
           dotnet publish -C Release -o ../release/linux-x64 --self-contained true
           
